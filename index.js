@@ -28,9 +28,27 @@ const client = new MongoClient(uri, {
 });
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    // Send a ping to confirm a successful connection
+
+    const db = client.db(`${process.env.DB_NAME}`);
+    const propertyCollection = db.collection("properties");
+
+    // app.post("/allProperties", async (req, res) => {
+    //   const newProduct = req.body;
+    //   console.log(req.body);
+    //   const result = await propertyCollection.insertOne(newProduct);
+    //   res.send(result);
+    // });
+    app.get("/allProperties", async (req, res) => {
+      try {
+        const allValues = await propertyCollection.find({}).toArray();
+        res.send(allValues);
+      } catch (err) {
+        console.error("❌ Error fetching data:", err);
+        res.status(500).send({ message: "Server Error", error: err });
+      }
+    });
+
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
@@ -40,4 +58,5 @@ async function run() {
     // await client.close();
   }
 }
+
 run().catch(console.dir);
