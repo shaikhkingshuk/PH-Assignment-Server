@@ -33,12 +33,24 @@ async function run() {
     const db = client.db(`${process.env.DB_NAME}`);
     const propertyCollection = db.collection("properties");
 
-    // app.post("/allProperties", async (req, res) => {
-    //   const newProduct = req.body;
-    //   console.log(req.body);
-    //   const result = await propertyCollection.insertOne(newProduct);
-    //   res.send(result);
-    // });
+    //recent properties
+    //
+    app.get("/recentProperties", async (req, res) => {
+      try {
+        const recentValues = await propertyCollection
+          .find({})
+          .sort({ posted_date: -1 }) // newest first
+          .limit(6) // only 6 results
+          .toArray();
+
+        res.send(recentValues);
+      } catch (err) {
+        console.error("fetching recent data errors : ", err);
+        res.status(500).send({ message: "Server Error", error: err });
+      }
+    });
+    //
+    //
     app.get("/allProperties", async (req, res) => {
       try {
         const allValues = await propertyCollection.find({}).toArray();
