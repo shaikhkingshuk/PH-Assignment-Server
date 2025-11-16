@@ -1,8 +1,7 @@
-console.log("hi");
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 port = 3000;
 require("dotenv").config();
 
@@ -60,6 +59,27 @@ async function run() {
         res.status(500).send({ message: "Server Error", error: err });
       }
     });
+    //single property
+    //
+    app.get("/property/:id", async (req, res) => {
+      try {
+        const propertyId = req.params.id;
+
+        const property = await propertyCollection.findOne({
+          _id: new ObjectId(propertyId),
+        });
+        console.log(property);
+        if (!property) {
+          return res.status(404).send({ message: "Property not found..." });
+        }
+
+        res.send(property);
+      } catch (err) {
+        res.status(500).send({ message: "Server Error", error: err });
+      }
+    });
+    //
+    //
 
     await client.db("admin").command({ ping: 1 });
     console.log(
