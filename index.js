@@ -31,6 +31,7 @@ async function run() {
 
     const db = client.db(`${process.env.DB_NAME}`);
     const propertyCollection = db.collection("properties");
+    const reviewsCollection = db.collection("reviews");
 
     //recent properties
     //
@@ -74,6 +75,50 @@ async function run() {
         }
 
         res.send(property);
+      } catch (err) {
+        res.status(500).send({ message: "Server Error", error: err });
+      }
+    });
+    //
+    //
+    //ad review
+    //
+    app.post("/property/addReview", async (req, res) => {
+      try {
+        const reviewData = req.body;
+
+        const result = await reviewsCollection.insertOne(reviewData);
+
+        res.status(201).send({
+          message: "Review added successfully",
+          insertedId: result.insertedId,
+        });
+      } catch (err) {
+        console.error("Error adding review:", err);
+        res.status(500).send({ message: "Server Error", error: err });
+      }
+    });
+
+    //
+    //
+    //all reviews
+    //
+    app.get("/property/reveiw/:id", async (req, res) => {
+      try {
+        const propertyId = req.params.id;
+
+        const reviews = await reviewsCollection
+          .find({
+            property_Id: propertyId,
+          })
+          .sort({ review_date: -1 })
+          .toArray();
+        console.log(reviews);
+        if (!reviews) {
+          return res.status(404).send({ message: "Reviews not found..." });
+        }
+
+        res.send(reviews);
       } catch (err) {
         res.status(500).send({ message: "Server Error", error: err });
       }
