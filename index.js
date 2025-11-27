@@ -125,6 +125,19 @@ async function run() {
     });
     //
     //
+    //add property
+    app.post("/addNewProperty", async (req, res) => {
+      try {
+        const newProduct = req.body;
+        const result = await propertyCollection.insertOne(newProduct);
+        res.send(result);
+      } catch (err) {
+        res.status(500).send({ message: "Server not responding", error: err });
+      }
+    });
+    //
+    //
+    //
 
     await client.db("admin").command({ ping: 1 });
     console.log(
