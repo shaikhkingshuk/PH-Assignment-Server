@@ -137,6 +137,29 @@ async function run() {
     });
     //
     //
+    //get myProperties
+    //
+    app.get("/myProperties/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+
+        const result = await propertyCollection
+          .find({ user_email: email })
+          .toArray();
+
+        res.send(result);
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+
+        res.status(500).send({
+          message: "Failed to fetch data",
+          error: err.message,
+        });
+      }
+    });
+
+    //
+    //
     //
 
     await client.db("admin").command({ ping: 1 });
