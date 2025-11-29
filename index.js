@@ -160,6 +160,15 @@ async function run() {
 
     //
     //
+    // delete a property
+    //
+    app.delete("/properties/:id", async (req, res) => {
+      const id = new ObjectId(req.params.id);
+      const result = await propertyCollection.deleteOne({ _id: id });
+      res.send(result);
+    });
+    //
+    //
     //
 
     await client.db("admin").command({ ping: 1 });
