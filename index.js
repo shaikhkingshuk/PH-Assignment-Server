@@ -169,6 +169,48 @@ async function run() {
     });
     //
     //
+    //  updating property
+    //
+    //
+    app.put("/updateProperty/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const updatedData = req.body;
+
+        const filter = { _id: new ObjectId(id) };
+
+        const data = {
+          $set: {
+            property_name: updatedData.property_name,
+            description: updatedData.description,
+            category: updatedData.category,
+            price: updatedData.price,
+            location: updatedData.location,
+            image: updatedData.image,
+          },
+        };
+
+        // Update the property
+        const updateResult = await propertyCollection.updateOne(filter, data);
+
+        if (updateResult.matchedCount === 0) {
+          return res.status(404).send({ message: "Property not found" });
+        }
+
+        // Fetch the updated property
+        const updatedProperty = await propertyCollection.findOne(filter);
+
+        res.send({
+          message: "Property updated successfully",
+          updatedProperty,
+        });
+      } catch (err) {
+        console.error("Error updating property:", err);
+        res.status(500).send({ message: "Server error", error: err });
+      }
+    });
+
+    //
     //
 
     await client.db("admin").command({ ping: 1 });
