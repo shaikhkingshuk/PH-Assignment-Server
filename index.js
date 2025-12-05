@@ -212,6 +212,24 @@ async function run() {
 
     //
     //
+    app.get("/myProductsRatings/:ownerEmail", async (req, res) => {
+      try {
+        const ownerEmail = req.params.ownerEmail;
+
+        const reviews = await reviewsCollection
+          .find({ property_owner: ownerEmail })
+          .sort({ review_date: -1 })
+          .toArray();
+
+        res.send(reviews);
+      } catch (err) {
+        console.error("❌ Error fetching other's reviews:", err);
+        res.status(500).send({ message: "Server Error", error: err });
+      }
+    });
+    //
+    //
+    //
 
     await client.db("admin").command({ ping: 1 });
     console.log(
