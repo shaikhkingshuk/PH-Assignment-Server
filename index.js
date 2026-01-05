@@ -22,22 +22,24 @@ const varifyFireBaseToken = async (req, res, next) => {
   //console.log("all good..");
 
   if (!req.headers.authorization) {
-    return res.status(401).send([]);
+    return res.status(401).send({ message: "Unauthorized" });
   }
 
   const fbToken = req.headers.authorization.split(" ")[1];
 
   if (!fbToken) {
-    return res.status(401).send([]);
+    return res.status(401).send({ message: "Unauthorized" });
   }
 
   try {
     const userInfo = await admin.auth().verifyIdToken(fbToken);
+
     req.token_email = userInfo.email;
-    //console.log("after token validation : ", userInfo);
+    req.token_uid = userInfo.uid;
+
     next();
   } catch (errror) {
-    return res.status(401).send([]);
+    return res.status(401).send({ message: "Unauthorized" });
   }
 };
 
@@ -73,7 +75,7 @@ async function run() {
         res.send(recentValues);
       } catch (err) {
         //console.error("fetching recent data errors : ", err);
-        res.status(500).send([]);
+        res.status(500).send({ message: "Server Error", error: err });
       }
     });
     //
@@ -84,7 +86,7 @@ async function run() {
         res.send(allValues);
       } catch (err) {
         //console.error("❌ Error fetching data:", err);
-        res.status(500).send([]);
+        res.status(500).send({ message: "Server Error", error: err });
       }
     });
     //single property
@@ -98,12 +100,12 @@ async function run() {
         });
         //console.log(property);
         if (!property) {
-          return res.status(404).send([]);
+          return res.status(404).send({ message: "Property not found..." });
         }
 
         res.send(property);
       } catch (err) {
-        res.status(500).send([]);
+        res.status(500).send({ message: "Server Error", error: err });
       }
     });
     //
@@ -122,7 +124,7 @@ async function run() {
         });
       } catch (err) {
         //console.error("Error adding review:", err);
-        res.status(500).send([]);
+        res.status(500).send({ message: "Server Error", error: err });
       }
     });
 
@@ -142,24 +144,32 @@ async function run() {
           .toArray();
         //console.log(reviews);
         if (reviews.length === 0) {
-          return res.status(404).send([]);
+          return res.status(404).send({ message: "Reviews not found..." });
         }
 
         res.send(reviews);
       } catch (err) {
-        res.status(500).send([]);
+        res.status(500).send({ message: "Server Error", error: err });
       }
     });
     //
     //
     //add property
+    //
+    //
     app.post("/addNewProperty", varifyFireBaseToken, async (req, res) => {
       try {
-        const newProduct = req.body;
+        const propertyData = req.body;
+
+        const newProduct = {
+          ...propertyData,
+          ownerId: req.token_uid,
+        };
+
         const result = await propertyCollection.insertOne(newProduct);
         res.send(result);
       } catch (err) {
-        res.status(500).send([]);
+        res.status(500).send({ message: "Server not responding", error: err });
       }
     });
     //
@@ -170,7 +180,7 @@ async function run() {
       try {
         const email = req.params.email;
         if (email !== req.token_email) {
-          return res.status(403).send([]);
+          return res.status(403).send({ message: "Forbidden access" });
         }
 
         const result = await propertyCollection
@@ -196,7 +206,11 @@ async function run() {
     //
     app.delete("/properties/:id", varifyFireBaseToken, async (req, res) => {
       const id = new ObjectId(req.params.id);
-      const result = await propertyCollection.deleteOne({ _id: id });
+
+      const result = await propertyCollection.deleteOne({
+        _id: id,
+        ownerId: req.token_uid,
+      });
       res.send(result);
     });
     //
@@ -209,7 +223,7 @@ async function run() {
         const id = req.params.id;
         const updatedData = req.body;
 
-        const filter = { _id: new ObjectId(id) };
+        const filter = { _id: new ObjectId(id), ownerId: req.token_uid };
 
         const data = {
           $set: {
@@ -226,7 +240,7 @@ async function run() {
         const updateResult = await propertyCollection.updateOne(filter, data);
 
         if (updateResult.matchedCount === 0) {
-          return res.status(404).send([]);
+          return res.status(404).send({ message: "Property not found" });
         }
 
         // Fetch the updated property
@@ -238,7 +252,7 @@ async function run() {
         });
       } catch (err) {
         //console.error("Error updating property:", err);
-        res.status(500).send([]);
+        res.status(500).send({ message: "Server error", error: err });
       }
     });
 
@@ -252,7 +266,7 @@ async function run() {
         try {
           const ownerEmail = req.params.ownerEmail;
           if (ownerEmail !== req.token_email) {
-            return res.status(403).send([]);
+            return res.status(403).send({ message: "Forbidden access" });
           }
 
           const reviews = await reviewsCollection
@@ -263,7 +277,7 @@ async function run() {
           res.send(reviews);
         } catch (err) {
           //console.error("❌ Error fetching other's reviews:", err);
-          res.status(500).send([]);
+          res.status(500).send({ message: "Server error", error: err });
         }
       }
     );
