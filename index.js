@@ -204,17 +204,48 @@ async function run() {
     //
     // delete a property
     //
+    //
+    //
     app.delete("/properties/:id", varifyFireBaseToken, async (req, res) => {
-      const id = new ObjectId(req.params.id);
+      const session = client.startSession();
 
-      const result = await propertyCollection.deleteOne({
-        _id: id,
-        ownerId: req.token_uid,
-      });
-      res.send(result);
+      try {
+        const propertyId = req.params.id;
+        const objectId = new ObjectId(propertyId);
+
+        await session.withTransaction(async () => {
+          const deletePropertyResult = await propertyCollection.deleteOne(
+            {
+              _id: objectId,
+              ownerId: req.token_uid,
+            },
+            { session }
+          );
+
+          if (deletePropertyResult.deletedCount === 0) {
+            throw new Error("Property not found or unauthorized");
+          }
+
+          await reviewsCollection.deleteMany(
+            { property_Id: propertyId },
+            { session }
+          );
+        });
+
+        res.send({
+          success: true,
+          message: "Property and related reviews deleted successfully",
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message || "Failed to delete property",
+        });
+      } finally {
+        await session.endSession();
+      }
     });
-    //
-    //
+
     //  updating property
     //
     //
@@ -285,7 +316,7 @@ async function run() {
     //
     //
 
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     //console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
