@@ -3,19 +3,18 @@ const app = express();
 const cors = require("cors");
 const admin = require("firebase-admin");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-const port = 3000;
+
 require("dotenv").config();
 
 app.use(cors());
 app.use(express.json());
 
-const serviceAccount = require("./homenest-firebase-adminsdk.json");
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
-
-app.get("/", (req, res) => {
-  res.send("server started successfully...");
+  credential: admin.credential.cert({
+    project_id: process.env.FB_PROJECT_ID,
+    private_key: process.env.FB_PRIVATE_KEY.replace(/\\n/g, "\n"),
+    client_email: process.env.FB_CLIENT_EMAIL,
+  }),
 });
 
 const varifyFireBaseToken = async (req, res, next) => {
@@ -42,8 +41,7 @@ const varifyFireBaseToken = async (req, res, next) => {
     return res.status(401).send({ message: "Unauthorized" });
   }
 };
-
-app.listen(port, () => console.log(`server is running on port : ${port}`));
+const PORT = process.env.PORT || 3000;
 
 const uri = `mongodb+srv://${process.env.DB_NAME}:${process.env.DB_PASS}@cluster0.jehcuf6.mongodb.net/?appName=Cluster0`;
 
@@ -61,6 +59,12 @@ async function run() {
     const db = client.db(`${process.env.DB_NAME}`);
     const propertyCollection = db.collection("properties");
     const reviewsCollection = db.collection("reviews");
+
+    app.get("/", (req, res) => {
+      res.send("server started successfully...");
+    });
+
+    app.listen(PORT, () => console.log(`server is running on PORT : ${PORT}`));
 
     //recent properties
     //
