@@ -4,7 +4,7 @@ HomenestBD Server is the backend part of a full-stack real estate web applicatio
 developed as a course project. It provides RESTful APIs to handle property data,
 user interactions, and review management for the client application.
 
-🌐 Server Base URL: https://homenestbd.netlify.app/
+🌐 Server Base URL: https://homenest-server.onrender.com
 
 ---
 
