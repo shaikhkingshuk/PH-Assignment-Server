@@ -9,14 +9,15 @@ require("dotenv").config();
 app.use(cors());
 app.use(express.json());
 
-admin.initializeApp({
-  credential: admin.credential.cert({
-    project_id: process.env.FB_PROJECT_ID,
-    private_key: process.env.FB_PRIVATE_KEY.replace(/\\n/g, "\n"),
-    client_email: process.env.FB_CLIENT_EMAIL,
-  }),
-});
+const serviceAccount = {
+  project_id: process.env.FIREBASE_PROJECT_ID,
+  client_email: process.env.FIREBASE_CLIENT_EMAIL,
+  private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+};
 
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 const varifyFireBaseToken = async (req, res, next) => {
   //console.log("all good..");
 
@@ -223,7 +224,7 @@ async function run() {
               _id: objectId,
               ownerId: req.token_uid,
             },
-            { session }
+            { session },
           );
 
           if (deletePropertyResult.deletedCount === 0) {
@@ -232,7 +233,7 @@ async function run() {
 
           await reviewsCollection.deleteMany(
             { property_Id: propertyId },
-            { session }
+            { session },
           );
         });
 
@@ -314,7 +315,7 @@ async function run() {
           //console.error("❌ Error fetching other's reviews:", err);
           res.status(500).send({ message: "Server error", error: err });
         }
-      }
+      },
     );
     //
     //
